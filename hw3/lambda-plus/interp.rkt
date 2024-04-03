@@ -17,11 +17,8 @@
     [(UnOp u e)      (interp-unop D E u e)]
     [(BinOp b e1 e2) (interp-binop D E b e1 e2)]
     [(If e1 e2 e3)   (interp-if D E e1 e2 e3)]
-    [(Let bindings e) (let ([E' (foldl (lambda (binding E)
-                                         (store E (first binding) (interp D E (second binding))))
-                                       E
-                                       bindings)])
-                         (interp D E' e))]
+    [(Let bindings body)   (interp D (store-bindings D E bindings) body)]
+    [(Let* bindings body)  (interp D (store-bindings-sequential D E bindings) body)]
     [(Lam xs e)      (interp-lam D E xs e)]
     [(App e es)      (interp-app D E e es)]))
 
@@ -116,3 +113,47 @@
     [(cons (DefnV y e) rest)      (if (eq? x y)
                                       (interp D '() e)
                                       (lookup-defn D rest x))]))
+
+;; Stores bindings sequentially for a 'Let*' expression.
+;; Each binding is added to the environment before the next binding is evaluated.
+(define (store-bindings-sequential D E bindings)
+  (match bindings
+    ['() E]  ;; Base case: no more bindings, return the environment.
+    [(cons head tail)
+     (store-bindings-sequential D
+                                (cons (list (get-variable-name (car head)) 
+                                            (interp D E (cdr head)))
+                                      E)
+                                tail)]))
+
+;; Extracts the variable name from a Var structure.
+(define (get-variable-name v)
+  (match v
+    [`#s(Var ,x) x]
+    [`(#s(Var ,x)) x]))
+
+;; Checks if a variable is already defined in the environment.
+(define (is-defined? D E x)
+  (match E
+    ['() #f]  ;; Base case: empty environment, variable not defined.
+    [(cons (list y val) rest) (if (eq? x y) #t (is-defined? D rest x))]))
+
+;; Stores bindings for a 'Let' expression.
+;; All bindings are stored in the environment before evaluating the body.
+(define (store-bindings D E bindings)
+  (match bindings
+    ['() E]  ;; Base case: no more bindings, return the environment.
+    [bindings (append (store-new-bindings D E '() bindings) E)]))
+
+;; Stores new bindings, ensuring no duplicates.
+(define (store-new-bindings D E-old E-new bindings)
+  (match bindings
+    ['() E-new]  ;; Base case: no more bindings, return the new environment.
+    [(cons head tail) 
+     (if (is-defined? D E-new (get-variable-name (car head)))
+         (raise (Err (string-append "let: duplicate identifier in: " (symbol->string (get-variable-name (car head))))))
+         (store-new-bindings D E-old 
+                             (cons (list (get-variable-name (car head)) 
+                                         (interp D E-old (cdr head)))
+                                   E-new) 
+                             tail))]))

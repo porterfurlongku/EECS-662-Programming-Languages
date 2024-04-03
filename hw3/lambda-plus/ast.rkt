@@ -1,7 +1,7 @@
 #lang racket
 
 (provide Val UnOp BinOp If Err Err?
-         Let Var App Lam Defn DefnV Prog)
+         Let Let* Var App Lam Defn DefnV Prog) ; Added Let and Let*
 
 ; type Values :=
 ;   | (Val v)
@@ -21,7 +21,8 @@
 (struct UnOp  (u e)      #:prefab)
 (struct BinOp (b e1 e2)  #:prefab)
 (struct If    (e1 e2 e3) #:prefab)
-(struct Let   (bindings e) #:prefab)  ; Modified to accept a list of bindings
+(struct Let   (xs e)     #:prefab) ; Added Let
+(struct Let*  (xs e)     #:prefab) ; Added Let*
 (struct App   (x args)   #:prefab)
 
 ; type Defn :=
