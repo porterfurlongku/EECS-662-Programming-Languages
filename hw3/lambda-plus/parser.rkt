@@ -50,8 +50,13 @@
 (define (parse-let-bindings bindings)
   (map 
     (lambda (binding) 
+      ;; Check if the binding is a list of two elements.
+      (unless (and (list? binding) (= (length binding) 2))
+        (error "Each binding must be a list of two elements"))
       ;; For each binding, create a pair (cons cell) where:
       ;; - The first element is a Var structure containing the variable name (car binding).
       ;; - The second element is the parsed expression associated with the variable (parse (cadr binding)).
       (cons (Var (car binding)) (parse (cadr binding))))
     bindings))  ;; Apply the lambda function to each binding in the list.
+
+

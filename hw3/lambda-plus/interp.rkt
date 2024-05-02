@@ -24,8 +24,11 @@
 
 ;; interp-lam :: Defn -> Env -> Vars -> Expr -> Val
 (define (interp-lam D E xs body)
-  (λ (aargs)
-    (interp D (append (zip xs aargs) E) body)))
+  (lambda (aargs)
+    (if (= (length xs) (length aargs))
+        (let ([extended-env (append (zip xs aargs) E)])
+          (interp D extended-env body))
+        (raise (Err "Arity mismatch")))))
 
 ;; interp-app :: Defn -> Env -> Expr -> Exprs -> Val
 (define (interp-app D E f es)
@@ -104,15 +107,18 @@
 ;; lookup-defn :: Defn -> Defn -> Symbol -> Val
 (define (lookup-defn D defns x)
   (match defns
-    ['()                          (raise (Err
-                                          (string-append "Unbound identifier: "
-                                                         (symbol->string x))))]
-    [(cons (Defn f xs body) rest) (if (eq? f x)
-                                      (λ (aargs) (interp D (zip xs aargs) body))
-                                      (lookup-defn D rest x))]
-    [(cons (DefnV y e) rest)      (if (eq? x y)
-                                      (interp D '() e)
-                                      (lookup-defn D rest x))]))
+    ['() (raise (Err (string-append "Unbound identifier: " (symbol->string x))))]
+    [(cons (Defn f xs body) rest)
+     (if (eq? f x)
+         (λ (aargs)
+           (if (= (length aargs) (length xs))
+               (interp D (zip xs aargs) body)
+               (raise (Err "Arity mismatch"))))
+         (lookup-defn D rest x))]
+    [(cons (DefnV y e) rest)
+     (if (eq? x y)
+         (interp D '() e)
+         (lookup-defn D rest x))]))
 
 ;; Stores bindings sequentially for a 'Let*' expression.
 ;; Each binding is added to the environment before the next binding is evaluated.
