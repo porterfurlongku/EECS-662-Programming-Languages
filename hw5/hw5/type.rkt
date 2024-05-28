@@ -64,17 +64,47 @@
                         (error "Type error!"))]
     [_              (error "Type error!")]))
 
+;; Type-check a sequence of expressions, returning the type of the last expression.
 (define (tc-seq TE es)
-  (error "TODO"))
+  ;; Helper function to get all elements except the last one.
+  (define (all-but-last lst)
+    (reverse (cdr (reverse lst))))
 
+  ;; If there's only one element, return its type-checked result.
+  (if (null? (cdr es))
+      (tc TE (car es))
+      (begin
+        ;; Type-check all but the last element for side effects.
+        (map (lambda (e) (tc TE e)) (all-but-last es))
+        ;; Return the type of the last expression.
+        (tc TE (last es)))))
+
+;; Type-check an expression and return a new reference type based on the result.
 (define (tc-new TE e)
-  (error "TODO"))
+  (let ((etype (tc TE e)))
+    ;; Wrap the type-checked result into a ParamT reference type.
+    (ParamT (T 'ref) etype)))
 
+;; Type-check a dereference operation, expecting a reference type.
 (define (tc-deref TE e)
-  (error "TODO"))
+  (match (tc TE e)
+    ;; If the expression is a reference type, return the contained type.
+    [(ParamT (T 'ref) t) t]
+    ;; Otherwise, raise a type error.
+    [_ (error "Type error: Expected a reference type for dereference")]))
 
+;; Type-check a set! operation, ensuring type compatibility between reference and new value.
 (define (tc-set! TE e1 e2)
-  (error "TODO"))
+  (let ((t1 (tc TE e1))  ;; Type of the reference.
+        (t2 (tc TE e2))) ;; Type of the new value.
+    (match t1
+      ;; If the reference is a ParamT of type 'ref', check type equality.
+      [(ParamT (T 'ref) t)
+       (if (equal? t t2)
+           t2  ;; Return the type of the new value if types match.
+           (error "Type error: Type mismatch in set!"))]
+      ;; If the first expression is not a reference type, raise an error.
+      [_ (error "Type error: Expected a reference type in set!")])))
 
 (define zip (lambda (l1 l2) (map list l1 l2)))
 
