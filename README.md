@@ -43,33 +43,33 @@ This file is responsible for parsing the input source code into an AST. It defin
 This file implements the type checking functionality for the language. It ensures that the source code adheres to the language's type rules before execution.
 
 ## Examples
-###Example Conditionals
+### 'Example Conditionals'
 ```sh
 (cond [(zero? (- 6 5)) 1]
       [(<= 6 7)        2]
       [else            3])
 ```
-###Example Primitives
+### 'Example Primitives'
 ```sh
 (or e e)
 (- e)
 (not e)
 (% e e)
 ```
-###Example Let Bindings
+### 'Example Let Bindings'
 ```sh
 (let ((x 1)
       (y 2))
   (+ x y))
 ```
-###Example Arity Checking -> This Will Result in Error
+### 'Example Arity Checking -> This Will Result in Error'
 ```sh
 (define (foo a b)
   (+ a b))
 
 (foo 1)
 ```
-###Example Term Rewrites
+### 'Example Term Rewrites'
 ```sh
 (cond [(zero? (- 6 5)) 1]
       [(<= 6 7)        2]
